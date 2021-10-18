@@ -1,0 +1,52 @@
+<html>
+  <head>
+    <title>File Upload</title>
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+  </head>
+
+  <body>
+    <form id="form">
+      <input type="file" id="file" name="file" />
+      <button id="upload">Upload</button>
+    </form>
+
+    <div id="progress"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+      const form = document.getElementById("form");
+      const progress = document.getElementById("progress");
+
+      socket.on("upload_start", function (data) {
+        console.log("upload_start: ", data);
+        progress.innerHTML = `${data.task} / ${data.percentComplete}`;
+      });
+
+      socket.on("upload_complete", function (data) {
+        console.log("upload_complete: ", data);
+        progress.innerHTML = `<video controls width="800">
+                                <source src="${data.outputPath}"
+                                        type="video/mp4">
+                                Sorry, your browser doesn't support embedded videos.
+                              </video>`;
+      });
+
+      form.onsubmit = (e) => {
+        e.preventDefault();
+        let request = new XMLHttpRequest();
+        let formData = new FormData();
+        let file = document.getElementById("file").files[0];
+
+        formData.append("file", file);
+
+        request.upload.addEventListener("progress", (e) => {
+          progress.innerHTML = `Uploading...`;
+        });
+
+        request.open("POST", "/upload");
+        request.send(formData);
+      };
+    </script>
+  </body>
+</html>
